@@ -38,6 +38,14 @@ server.get("/list", async (_, res) => {
   const data = await rekognitionController.listCollection();
   res.send({ data });
 });
+server.post("/addFace", [
+  multerMiddleware.single("addFace"),
+  rekognitionController.addFaceToCollection,
+]);
+server.post("/searchFace", [
+  multerMiddleware.single("searchFace"),
+  rekognitionController.searchFaceByImage,
+]);
 server.listen(SERVER_PORT, () => {
   console.log("Rekognition API Started at port 8080");
 });

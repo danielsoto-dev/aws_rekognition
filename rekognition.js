@@ -138,6 +138,75 @@ const deleteCollection = async (req, res) => {
     console.log("error", err.stack);
   }
 };
+const addFaceToCollection = async (req, res) => {
+  const {
+    file,
+    body: { collectionName, name_id },
+  } = req;
+  console.log("NOMBRE DE LA COLLECI´ON", collectionName);
+  if (!file) return res.status(400).send();
+  //Inicializamos la instancia de AWS Rekognition
+
+  // Usando un FileStream para enviar a AWS
+  const params = {
+    Image: {
+      Bytes: file.buffer,
+    },
+    ExternalImageId: name_id,
+    MaxFaces: 1,
+    QualityFilter: "AUTO",
+    CollectionId: collectionName,
+  };
+
+  try {
+    // Solicitamos el reconocimiento a AWS
+    console.log(params);
+    const response = await rekognition.indexFaces(params).promise();
+    console.log(response);
+    return res.send({
+      response,
+    });
+  } catch (error) {
+    console.log("ERROR");
+    console.error(error);
+    return res.status(500).send({ error });
+  }
+};
+const searchFaceByImage = async (req, res) => {
+  const {
+    file,
+    body: { collectionName },
+  } = req;
+  console.log("NOMBRE DE LA COLLECI´ON", collectionName);
+  if (!file) return res.status(400).send();
+  //Inicializamos la instancia de AWS Rekognition
+
+  // Usando un FileStream para enviar a AWS
+  const params = {
+    Image: {
+      Bytes: file.buffer,
+    },
+    // MaxFaces: 1,
+    // FaceMatchThreshold?: Percent;
+    // QualityFilter?: QualityFilter;
+    CollectionId: collectionName,
+  };
+
+  try {
+    // Solicitamos el reconocimiento a AWS
+    console.log(params);
+    const response = await rekognition.searchFacesByImage(params).promise();
+    const faceMatches = response.FaceMatches;
+    console.log("faceMatches", faceMatches);
+    return res.send({
+      faceMatches,
+    });
+  } catch (error) {
+    console.log("ERROR");
+    console.error(error);
+    return res.status(500).send({ error });
+  }
+};
 const listCollection = async () => {
   try {
     console.log("listing collections");
@@ -150,6 +219,7 @@ const listCollection = async () => {
     console.log("error", err.stack);
   }
 };
+``;
 module.exports = {
   rekognizeText,
   rekognizeFace,
@@ -157,4 +227,6 @@ module.exports = {
   createCollection,
   listCollection,
   deleteCollection,
+  addFaceToCollection,
+  searchFaceByImage,
 };
