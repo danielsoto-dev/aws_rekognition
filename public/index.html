@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h2>Text Recognition</h2>
+    <form action="/text" method="post" enctype="multipart/form-data">
+      <input
+        type="file"
+        name="fileToUpload"
+        id="fileToUpload"
+        accept="image/*"
+      />
+      <button>submit</button>
+    </form>
+    <h2>Face Recognition</h2>
+    <form action="/face" method="post" enctype="multipart/form-data">
+      <input
+        type="file"
+        name="faceToUpload"
+        id="faceToUpload"
+        accept="image/*"
+      />
+      <button>submit</button>
+    </form>
+    <h2>Compare Faces</h2>
+    <form
+      action="/compare"
+      method="post"
+      id="form-compare"
+      enctype="multipart/form-data"
+    >
+      <label for="faceSource"></label>
+      <div id="preview" style="max-width: 100px">
+        <img style="width: 100%" id="img-faceSource" src="" alt="" />
+      </div>
+      <input
+        type="file"
+        onchange="readURL(this)"
+        name="faceCompare"
+        id="faceSource"
+        accept="image/*"
+      />
+      <div id="preview" style="max-width: 100px">
+        <img style="width: 100%" id="img-faceTarget" src="" alt="" />
+      </div>
+      <input
+        type="file"
+        name="faceCompare"
+        onchange="readURL(this)"
+        id="faceTarget"
+        accept="image/*"
+      />
+
+      <p id="id"></p>
+      <button id="btn-compare">submit</button>
+    </form>
+    <h2>Create Collection</h2>
+    <form id="form-create-collection" action="">
+      <input type="text" name="collectionName" id="collectionName" />
+      <button id="btn-create-collection">Create</button>
+    </form>
+    <h2>Delete Collection</h2>
+    <form id="form-delete-collection" action="">
+      <input type="text" name="collectionName" id="collectionName" />
+      <button id="btn-delete-collection">Delete</button>
+    </form>
+    <h2>List Collection</h2>
+    <ul id="collection-list-ul"></ul>
+    <button onclick="listCollections(this)">Fetch</button>
+    <script>
+      async function listCollections(btn) {
+        const response = await fetch("/list");
+        console.log(response);
+        const {
+          data: { CollectionIds = [] },
+        } = await response.json();
+        const ul = document.getElementById("collection-list-ul");
+        ul.innerHTML = "";
+        CollectionIds.forEach((collection) => {
+          const li = document.createElement("li");
+          li.innerHTML = collection;
+          ul.appendChild(li);
+        });
+      }
+
+      function readURL(input) {
+        let { id } = input;
+        if (input.files && input.files[0]) {
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            let query = `#img-${id}`;
+            document.querySelector(query).src = e.target.result;
+          };
+          reader.readAsDataURL(input.files[0]);
+        }
+      }
+      document
+        .querySelector("#btn-compare")
+        .addEventListener("click", async function (e) {
+          e.preventDefault();
+          const response = await fetch("/compare", {
+            method: "POST",
+            body: new FormData(document.querySelector("#form-compare")),
+          });
+          const data = await response.json();
+          const {
+            detections: [{ Similarity: faceSimilarity }],
+          } = data;
+          document.querySelector(
+            "#id"
+          ).innerHTML = `This two faces have a ${faceSimilarity.toFixed(
+            2
+          )}% similarity`;
+        });
+      document
+        .querySelector("#btn-create-collection")
+        .addEventListener("click", async function (e) {
+          e.preventDefault();
+          const formElement = document.querySelector("#form-create-collection");
+          const formData = new URLSearchParams(new FormData(formElement));
+          const response = await fetch("/create", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+          console.log(data);
+        });
+      document
+        .querySelector("#btn-delete-collection")
+        .addEventListener("click", async function (e) {
+          e.preventDefault();
+          const formElement = document.querySelector("#form-delete-collection");
+          const formData = new URLSearchParams(new FormData(formElement));
+          const response = await fetch("/delete", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+          console.log(data);
+        });
+    </script>
+  </body>
+</html>
